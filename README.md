@@ -142,25 +142,47 @@ rate.duration=1
 
 ## Architecture Diagram
 
-```text
-Client
-   │
-   ▼
-Spring Interceptor
-   │
-   ▼
-Rate Limiter Service
-   │
-   ▼
-Redis Sorted Set (ZSET)
-   │
-   ▼
-Allow / Reject Decision
-   │
-   ▼
-Controller
-```
-
+                +------------------+
+                |      Client      |
+                |  Browser/Postman |
+                +---------+--------+
+                          |
+                          v
+                +------------------+
+                | Spring Boot App  |
+                +------------------+
+                          |
+                          v
+          +--------------------------------+
+          | RateLimiterInterceptor         |
+          |  - Extract Client IP           |
+          |  - Apply Sliding Window Logic  |
+          +--------------------------------+
+                          |
+                          v
+                +------------------+
+                | RateLimiterService|
+                +------------------+
+                          |
+                          v
+                +------------------+
+                |      Redis       |
+                |  Sorted Set(ZSET)|
+                +------------------+
+                          |
+          +---------------+---------------+
+          |                               |
+          v                               v
+ +-------------------+         +----------------------+
+ | Request Allowed   |         | Rate Limit Exceeded |
+ | Forward to API    |         | Return HTTP 429     |
+ +-------------------+         +----------------------+
+          |                               |
+          v                               v
+ +-------------------+         +----------------------+
+ | Controller        |         | JSON Error Response  |
+ | Business Logic    |         | Structured API Error |
+ +-------------------+         +----------------------+
 ---
 
 ## Learning Outcomes
